@@ -3,227 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Módulo Scanner Reutilizable - MAGSA</title>
+    <title>Liquidación de Última Milla - Zonas</title>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 500px; width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #1e293b; margin-top: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #475569; font-size: 14px; }
-        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-transform: uppercase; transition: border-color 0.2s; }
-        input[type="text"]:focus { border-color: #2563eb; outline: none; }
-        #video-container { width: 100%; height: 250px; background: #000; border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 10px; }
+        body { background-color: #0f172a; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; color: #f8fafc; }
+        .container { max-width: 480px; width: 100%; background: #1e293b; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h2 { text-align: center; color: #38bdf8; margin-top: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        .row-inputs { display: flex; gap: 10px; margin-bottom: 12px; }
+        .form-group { flex: 2; display: flex; flex-direction: column; }
+        .form-group.sm { flex: 1; }
+        label { margin-bottom: 6px; font-weight: 600; color: #94a3b8; font-size: 13px; text-transform: uppercase; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; background: #0f172a; border: 2px solid #334155; border-radius: 8px; font-size: 15px; color: #fff; text-transform: uppercase; }
+        input:focus { border-color: #38bdf8; outline: none; }
+        #video-container { width: 100%; height: 200px; background: #000; border-radius: 10px; overflow: hidden; position: relative; border: 2px solid #334155; margin-bottom: 10px; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; text-transform: uppercase; }
-        .btn-primary { background-color: #2563eb; color: white; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-secondary { background-color: #64748b; color: white; }
-        .btn-secondary:hover { background-color: #475569; }
-        .btn-success { background-color: #10b981; color: white; margin-top: 10px; }
-        .btn-success:hover { background-color: #059669; }
-        .btn-danger { background-color: #ef4444; color: white; }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn:disabled { background-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
-        .list-container { margin-top: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; max-height: 200px; overflow-y: auto; }
-        .list-title { font-weight: bold; color: #334155; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 6px 0; border-bottom: 1px dashed #e2e8f0; font-family: monospace; font-size: 15px; color: #334155; display: flex; justify-content: space-between; }
-        li::before { content: "✓ "; color: #10b981; font-weight: bold; }
-        #status-message { text-align: center; font-weight: 600; margin-top: 10px; font-size: 15px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; text-transform: uppercase; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-blue { background: #0284c7; color: white; }
+        .btn-blue:hover { background: #0369a1; }
+        .btn-orange { background: #ea580c; color: white; margin-bottom: 10px; }
+        .btn-orange:hover { background: #c2410c; }
+        .btn-green { background: #16a34a; color: white; font-size: 16px; margin-top: 15px; border: 2px solid #22c55e; }
+        .btn-green:hover { background: #15803d; }
+        .btn-danger { background: #dc2626; color: white; margin-top: 10px; font-size: 13px; padding: 8px; opacity: 0.7; }
+        .btn:disabled { background: #475569 !important; color: #64748b !important; cursor: not-allowed; border-color: transparent; }
+        .panel-status { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-top: 10px; }
+        .counter-badge { float: right; background: #38bdf8; color: #0f172a; padding: 2px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
+        ul { list-style: none; padding: 0; margin: 5px 0 0 0; max-height: 100px; overflow-y: auto; font-family: monospace; font-size: 13px; color: #cbd5e1; }
+        li { padding: 4px 0; border-bottom: 1px dashed #334155; }
+        #global-status { text-align: center; font-weight: bold; margin-top: 15px; font-size: 14px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Scanner Corporativo</h2>
+    <h2>Liquidación Última Milla</h2>
     
-    <div class="form-group">
-        <label for="txtTitulo">Título / Módulo del Escaneo *</label>
-        <input type="text" id="txtTitulo" placeholder="Ej: INVENTARIO PASILLO 1, RECEPCION PROVEEDOR" required>
+    <div class="row-inputs">
+        <div class="form-group">
+            <label>Zona Actual</label>
+            <input type="text" id="txtZona" placeholder="Ej: OLMOS">
+        </div>
+        <div class="form-group sm">
+            <label>Precio S/.</label>
+            <input type="number" id="txtPrecio" placeholder="0.00" step="0.10">
+        </div>
     </div>
 
     <div id="video-container">
         <video id="preview"></video>
     </div>
+    <button type="button" class="btn btn-blue" id="btnCambiarCamara" style="padding: 8px; font-size: 13px; margin-bottom: 15px;">🔄 Alternar Lente</button>
 
-    <button type="button" class="btn btn-secondary" id="btnCambiarCamara">🔄 Cambiar Cámara</button>
-    
-    <div class="form-group" style="margin-top: 15px;">
-        <label>Entrada Manual Básica</label>
-        <input type="text" id="txtManual" placeholder="Escribe código si la cámara falla y presiona Enter">
+    <div class="panel-status">
+        <span class="counter-badge" id="lblCountZona">0</span>
+        <label style="color: #38bdf8;">Guías en Zona Actual</label>
+        <ul id="listaZonaActual"></ul>
     </div>
 
-    <div class="list-container">
-        <div class="list-title">Códigos Acumulados (<span id="lblContador">0</span>)</div>
-        <ul id="listaCodigos"></ul>
+    <button type="button" class="btn btn-orange" id="btnGuardarZona" style="margin-top: 12px;">📥 Cerrar y Guardar Lote Zona</button>
+
+    <div class="panel-status" style="border-color: #16a34a; margin-top: 15px;">
+        <span class="counter-badge" id="lblTotalZonas" style="background:#22c55e;">0</span>
+        <label style="color: #22c55e;">Total Zonas Listas para Envío</label>
+        <div id="resumenZonasMemoria" style="font-size: 13px; color: #94a3b8; margin-top: 5px; font-family: monospace;">Ninguna zona guardada aún.</div>
     </div>
 
-    <button type="button" class="btn btn-success" id="btnEnviarBD" disabled>🚀 Enviar Datos a Base de Datos</button>
-    <button type="button" class="btn btn-danger" id="btnCerrar" style="margin-top: 10px;">❌ Cerrar Aplicación</button>
+    <button type="button" class="btn btn-green" id="btnEnviarFinal" disabled>🚀 Enviar todas las zonas a la BD</button>
+    <button type="button" class="btn btn-danger" id="btnCerrar">❌ Salir del Módulo</button>
 
-    <div id="status-message"></div>
+    <div id="global-status"></div>
 </div>
 
 <script>
-    // URL DE CONTROL DE GOOGLE APPS SCRIPT
-    // ¡REEMPLAZA ESTA URL CON TU ENLACE ACTUAL QUE TERMINA EN /exec!
+    // URL DE CONTROL DE TU GOOGLE APPS SCRIPT (MANTÉN TU URL ACTUAL)
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyX_JfM2y9nMwrJgB6W6lbIOYjd9dfPogsCM73tZubmqVZkaGJB8H3reChNVpv30qsq/exec";
 
     let codeReader = null;
-    let listaLocalCodigos = [];
     let lasCamarasDisponibles = [];
     let indiceCamaraActual = 0;
     let ejecutandoStreaming = false;
+    let encendidoParaLectura = true; // Control de retardo (medio segundo)
 
-    // Captura de elementos de la interfaz gráfica
-    const txtTitulo = document.getElementById('txtTitulo');
-    const txtManual = document.getElementById('txtManual');
-    const listaCodigosUI = document.getElementById('listaCodigos');
-    const lblContador = document.getElementById('lblContador');
-    const btnEnviarBD = document.getElementById('btnEnviarBD');
+    // Estructuras de Datos Locales
+    let guiasZonaActual = [];
+    let todasLasZonasMemoria = []; // Aquí se acumulan los lotes [{titulo: 'OLMOS', precio: 5, codigos: [...]}]
+
+    // Captura UI
+    const txtZona = document.getElementById('txtZona');
+    const txtPrecio = document.getElementById('txtPrecio');
+    const listaZonaActualUI = document.getElementById('listaZonaActual');
+    const lblCountZona = document.getElementById('lblCountZona');
+    const btnGuardarZona = document.getElementById('btnGuardarZona');
+    const lblTotalZonas = document.getElementById('lblTotalZonas');
+    const resumenZonasMemoria = document.getElementById('resumenZonasMemoria');
+    const btnEnviarFinal = document.getElementById('btnEnviarFinal');
     const btnCambiarCamara = document.getElementById('btnCambiarCamara');
     const btnCerrar = document.getElementById('btnCerrar');
-    const statusMessage = document.getElementById('status-message');
+    const globalStatus = document.getElementById('global-status');
 
-    // Inicialización del entorno al cargar la página
     window.addEventListener('DOMContentLoaded', () => {
         codeReader = new ZXing.BrowserMultiFormatReader();
         inicializarCamaras();
     });
 
-    // Detectar hardware de cámaras e iniciar preferentemente la trasera
+    // Pitido electrónico nativo mediante Web Audio API
+    function emitirPitidoSuave() {
+        try {
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let oscillator = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine'; // Tono limpio
+            oscillator.frequency.value = 1000; // Frecuencia del pitido en Hz
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Volumen suave
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.08); // Duración corta (80ms)
+        } catch (e) {
+            console.log("Audio no soportado aún en este navegador.");
+        }
+    }
+
     function inicializarCamaras() {
         codeReader.listVideoInputDevices()
             .then((devices) => {
                 lasCamarasDisponibles = devices;
-                if (devices.length === 0) {
-                    mostrarStatus("No se encontraron cámaras físicas.", "red");
-                    return;
-                }
-
-                // Intentar buscar la cámara trasera automáticamente ("back", "environment" o "rear")
+                if (devices.length === 0) return;
                 let indiceTrasero = devices.findIndex(device => 
                     device.label.toLowerCase().includes('back') || 
                     device.label.toLowerCase().includes('environment') ||
                     device.label.toLowerCase().includes('trasera')
                 );
-
-                // Si se encuentra la trasera la fijamos, de lo contrario usamos la primera disponible
                 indiceCamaraActual = indiceTrasero !== -1 ? indiceTrasero : 0;
                 encenderCamara(lasCamarasDisponibles[indiceCamaraActual].deviceId);
-            })
-            .catch(err => mostrarStatus("Error accediendo a cámaras: " + err, "red"));
+            }).catch(err => console.log(err));
     }
 
-    // Encender el flujo de video en tiempo real e interceptar lecturas de códigos
     function encenderCamara(deviceId) {
-        if (ejecutandoStreaming) {
-            codeReader.reset();
-        }
+        if (ejecutandoStreaming) codeReader.reset();
         ejecutandoStreaming = true;
         codeReader.decodeFromVideoDevice(deviceId, 'preview', (result, err) => {
-            if (result) {
-                agregarCodigoALaLista(result.text);
-                // Vibración táctil corta para indicar captura (si el dispositivo lo soporta)
-                if (navigator.vibrate) navigator.vibrate(100);
+            if (result && encendidoParaLectura) {
+                // Bloqueo inmediato para evitar lecturas duplicadas continuas
+                encendidoParaLectura = false; 
+                
+                procesarEscaneoInmediato(result.text);
+                
+                // Retardo adaptativo de medio segundo (500 milisegundos) para reactivar
+                setTimeout(() => {
+                    encendidoParaLectura = true;
+                }, 500); 
             }
         });
     }
 
-    // Evento para alternar entre cámara trasera y delantera
     btnCambiarCamara.addEventListener('click', () => {
-        if (lasCamarasDisponibles.length <= 1) {
-            mostrarStatus("Tu dispositivo solo cuenta con una cámara activa.", "orange");
-            return;
-        }
+        if (lasCamarasDisponibles.length <= 1) return;
         indiceCamaraActual = (indiceCamaraActual + 1) % lasCamarasDisponibles.length;
         encenderCamara(lasCamarasDisponibles[indiceCamaraActual].deviceId);
     });
 
-    // Agregar códigos capturados a nuestro arreglo local
-    function agregarCodigoALaLista(codigo) {
+    function procesarEscaneoInmediato(codigo) {
         let codLimpio = codigo.trim().toUpperCase();
-        if (codLimpio === "") return;
+        if (codLimpio === "" || guiasZonaActual.includes(codLimpio)) return;
 
-        listaLocalCodigos.push(codLimpio);
-        actualizarInterfazLista();
+        emitirPitidoSuave();
+        if (navigator.vibrate) navigator.vibrate(60);
+
+        guiasZonaActual.push(codLimpio);
+        
+        // Renderizar en la lista visual de la zona
+        let li = document.createElement('li');
+        li.textContent = "📦 " + codLimpio;
+        listaZonaActualUI.appendChild(li);
+        lblCountZona.textContent = guiasZonaActual.length;
     }
 
-    // Escucha de caja manual al presionar Enter
-    txtManual.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            agregarCodigoALaLista(txtManual.value);
-            txtManual.value = "";
+    // BOTÓN: Guardar lote de zona actual y limpiar para la siguiente
+    btnGuardarZona.addEventListener('click', () => {
+        let zona = txtZona.value.trim().toUpperCase();
+        let precio = txtPrecio.value.trim();
+
+        if (zona === "" || precio === "") {
+            alert("⚠️ DEBES RELLENAR EL NOMBRE DE LA ZONA Y EL PRECIO UNITARIO ANTES DE GUARDAR EL LOTE.");
+            return;
         }
-    });
-
-    // Refrescar la pantalla con los elementos recolectados
-    function actualizarInterfazLista() {
-        listaCodigosUI.innerHTML = "";
-        listaLocalCodigos.forEach(cod => {
-            let li = document.createElement('li');
-            li.textContent = cod;
-            listaCodigosUI.appendChild(li);
-        });
-        lblContador.textContent = listaLocalCodigos.length;
-        // Habilitar botón de envío únicamente si hay códigos acumulados
-        btnEnviarBD.disabled = listaLocalCodigos.length === 0;
-    }
-
-    // Proceso de validación y envío empaquetado hacia Google Sheets
-    btnEnviarBD.addEventListener('click', () => {
-        // Validación obligatoria del título corporativo
-        if (txtTitulo.value.trim() === "") {
-            alert("⚠️ POR FAVOR, DIGITA UN TÍTULO O DESCRIPCIÓN PARA ESTE LOTE DE ESCANEO ANTES DE ENVIAR.");
-            txtTitulo.focus();
+        if (guiasZonaActual.length === 0) {
+            alert("⚠️ NO HAY GUÍAS ESCANEADAS EN ESTA ZONA.");
             return;
         }
 
-        mostrarStatus("Transmitiendo datos de forma segura...", "#2563eb");
-        btnEnviarBD.disabled = true;
+        // Empaquetar lote en el arreglo definitivo de memoria
+        todasLasZonasMemoria.push({
+            titulo: zona,
+            precio: precio,
+            codigos: guiasZonaActual
+        });
 
-        const payload = {
-            titulo: txtTitulo.value.toUpperCase().trim(),
-            codigos: listaLocalCodigos
-        };
+        // Limpieza de campos para permitir la siguiente zona (ej: Insculas)
+        guiasZonaActual = [];
+        txtZona.value = "";
+        txtPrecio.value = "";
+        listaZonaActualUI.innerHTML = "";
+        lblCountZona.textContent = "0";
+
+        // Actualizar resumen en memoria
+        actualizarResumenGlobal();
+    });
+
+    function actualizarResumenGlobal() {
+        lblTotalZonas.textContent = todasLasZonasMemoria.length;
+        if (todasLasZonasMemoria.length === 0) {
+            resumenZonasMemoria.innerHTML = "Ninguna zona guardada aún.";
+            btnEnviarFinal.disabled = true;
+            return;
+        }
+
+        let htmlResumen = "";
+        todasLasZonasMemoria.forEach(z => {
+            htmlResumen += `• ${z.titulo} (S/.${z.precio}): ${z.codigos.length} guías<br>`;
+        });
+        resumenZonasMemoria.innerHTML = htmlResumen;
+        btnEnviarFinal.disabled = false; // Habilitar el botón definitivo de base de datos
+    }
+
+    // BOTÓN: Enviar todo el acumulado del día a Google Sheets
+    btnEnviarFinal.addEventListener('click', () => {
+        globalStatus.textContent = "Transmitiendo liquidaciones masivas...";
+        btnEnviarFinal.disabled = true;
 
         fetch(WEB_APP_URL, {
             method: "POST",
-            mode: "no-cors", // Evita problemas de políticas Cross-Origin
+            mode: "no-cors",
             cache: "no-cache",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ zonas: todasLasZonasMemoria })
         })
         .then(() => {
-            mostrarStatus("¡GUARDADO EN MAYÚSCULAS CON ÉXITO! ✓", "#10b981");
-            listaLocalCodigos = []; // Limpiar cola local
-            actualizarInterfazLista();
+            globalStatus.innerHTML = "🎉 ¡LIQUIDACIÓN ENVIADA CON ÉXITO A LA BD! ✓";
+            todasLasZonasMemoria = [];
+            actualizarResumenGlobal();
         })
         .catch(err => {
-            mostrarStatus("Falla al inyectar datos: " + err, "#ef4444");
-            btnEnviarBD.disabled = false;
+            globalStatus.textContent = "Falla de red: " + err;
+            btnEnviarFinal.disabled = false;
         });
     });
 
-    // Cerrar la aplicación y apagar hardware de cámara
     btnCerrar.addEventListener('click', () => {
-        if (confirm("¿Estás seguro de que deseas cerrar la aplicación? Se perderán las lecturas que no hayas enviado.")) {
+        if (confirm("¿Cerrar módulo? Se perderán las zonas pendientes que no se hayan enviado a la base de datos.")) {
             codeReader.reset();
-            document.body.innerHTML = `
-                <div class="container" style="text-align:center; padding:40px;">
-                    <h3 style="color:#475569;">Aplicación Cerrada Correctamente</h3>
-                    <p style="color:#64748b;">El hardware de la cámara ha sido apagado de forma segura.</p>
-                </div>
-            `;
+            document.body.innerHTML = `<div class="container" style="text-align:center;"><h2>Módulo Detenido</h2><p>Cámara apagada de forma segura.</p></div>`;
         }
     });
-
-    function mostrarStatus(msg, color) {
-        statusMessage.textContent = msg;
-        statusMessage.style.color = color;
-    }
 </script>
 
 </body>
