@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Códigos de Barra</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; color: #333; }
+        #reader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+        .input-group {
+            display: flex;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        .list-container {
+            margin-top: 20px;
+        }
+        ul { list-style: none; padding: 0; }
+        li {
+            background: #e9ecef;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status { font-size: 12px; font-weight: bold; }
+        .pending { color: #ffc107; }
+        .saved { color: #28a745; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Escaner de Barra</h2>
+    
+    <div id="reader"></div>
+    
+    <div class="input-group">
+        <input type="text" id="manualCode" placeholder="Código manual o lector de pistola">
+        <button onclick="agregarCodigoManual()">Agregar</button>
+    </div>
+
+    <div class="list-container">
+        <h3>Códigos Capturados</h3>
+        <ul id="listaCodigos"></ul>
+    </div>
+</div>
+
+<script>
+    // ⚠️ REMPLAZA ESTA URL CON LA DE TU GOOGLE APPS SCRIPT
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyX_JfM2y9nMwrJgB6W6lbIOYjd9dfPogsCM73tZubmqVZkaGJB8H3reChNVpv30qsq/exec"; 
+
+    // Inicializar el escáner de la cámara
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
+    html5QrcodeScanner.render(onScanSuccess);
+
+    function onScanSuccess(decodedText, decodedResult) {
+        // Al detectar un código, lo procesamos
+        procesarCodigo(decodedText);
+        
+        // Detener temporalmente para evitar lecturas duplicadas masivas
+        html5QrcodeScanner.clear();
+        setTimeout(() => {
+            html5QrcodeScanner.render(onScanSuccess);
+        }, 2000);
+    }
+
+    function agregarCodigoManual() {
+        const input = document.getElementById('manualCode');
+        if(input.value.trim() !== "") {
+            procesarCodigo(input.value.trim());
+            input.value = "";
+        }
+    }
+
+    function procesarCodigo(codigo) {
+        const lista = document.getElementById('listaCodigos');
+        
+        // Crear elemento en la lista de la pantalla (Estado: Pendiente)
+        const li = document.createElement('li');
+        const idTemporal = Date.now();
+        li.setAttribute('id', idTemporal);
+        li.innerHTML = `<span>${codigo}</span> <span class="status pending">Enviando...</span>`;
+        lista.insertBefore(li, lista.firstChild);
+
+        // Enviar inmediatamente a Google Sheets
+        enviarAGoogleSheets(codigo, idTemporal);
+    }
+
+    function enviarAGoogleSheets(codigo, idElemento) {
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors", // Evita problemas de CORS comunes con Apps Script
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ codigo: codigo })
+        })
+        .then(() => {
+            // Como usamos 'no-cors', asumimos éxito si la petición no falla físicamente
+            const statusLabel = document.getElementById(idElemento).querySelector('.status');
+            statusLabel.textContent = "Guardado ✓";
+            statusLabel.className = "status saved";
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            const statusLabel = document.getElementById(idElemento).querySelector('.status');
+            statusLabel.textContent = "Error ✗";
+            statusLabel.style.color = "red";
+        });
+    }
+</script>
+
+</body>
+</html>
